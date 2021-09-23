@@ -24,12 +24,35 @@ const choices = [
   "[Quit] Exit Program",
 ];
 
+const sqlQueries = {
+  viewAllDepartmentsQuery: "SELECT * FROM `department`",
+  viewAllRolesQuery:
+    "SELECT role.id, role.title AS role, role.salary, department.`name` AS department FROM `role` JOIN department ON `department`.id = `role`.department_id ORDER BY role.id",
+  viewAllEmployeesQuery:
+    "SELECT employee.id, employee.first_name, employee.last_name, CONCAT(mgr.first_name,' ',mgr.last_name) AS manager, role.title AS role, role.salary, department.`name` AS department FROM `employee` JOIN `role` ON `role`.id = `employee`.role_id JOIN `department` ON `department`.id = `role`.department_id LEFT JOIN `employee` `mgr` ON `mgr`.id = `employee`.manager_id",
+  addDepartmentQuery: "INSERT INTO `department` (`name`) VALUES (?)",
+  addRoleQuery: "INSERT INTO `role` (title, salary, department_id) VALUES (?, ?, ?)",
+  addEmployeeQuery: "",
+  updateEmployeeRoleQuery: "",
+};
+
+const {
+  viewAllDepartmentsQuery,
+  viewAllRolesQuery,
+  viewAllEmployeesQuery,
+  addDepartmentQuery,
+  addRoleQuery,
+  addEmployeeQuery,
+  updateEmployeeRoleQuery,
+} = sqlQueries;
+
 function init() {
   console.log(
     logo({
       name: "Employee Manager",
     }).render()
   );
+  console.log(sqlQueries.addEmployeeQuery);
   userChoices();
 }
 
@@ -91,15 +114,16 @@ function userChoices() {
 }
 
 function viewAllDepartments() {
-  connection.query("SELECT * FROM `department`", function (err, results) {
+  connection.query(sqlQueries.viewAllDepartmentsQuery, function (err, results) {
     console.log("\n");
     console.table(results);
     userChoices();
   });
 }
+
 function viewAllRoles() {
   connection.query(
-    "SELECT * FROM `role` JOIN department on `role`.department_id = department.id",
+    sqlQueries.viewAllRolesQuery,
     function (err, results) {
       console.log("\n");
       console.table(results);
@@ -107,16 +131,93 @@ function viewAllRoles() {
     }
   );
 }
+
 function viewAllEmployees() {
-  connection.query("SELECT * FROM `employee`", function (err, results) {
-    console.log("\n");
-    console.table(results);
-    userChoices();
+  connection.query(
+    sqlQueries.viewAllEmployeesQuery,
+    function (err, results) {
+      console.log("\n");
+      console.table(results);
+      userChoices();
+    }
+  );
+}
+
+function addDepartment() {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "departmentName",
+        message: "Enter new department name:",
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        sqlQueries.addDepartmentQuery,
+        [Object.values(answer)],
+        function (err, results) {
+          connection.query(
+            sqlQueries.viewAllDepartmentsQuery,
+            function (err, results) {
+              console.log("\n");
+              console.table(results);
+              userChoices();
+            }
+          );
+        }
+      );
+    });
+}
+
+function addRole() {
+  connection.query(sqlQueries.viewAllDepartmentsQuery, function (err, results) {
+    let departmentArray = [];
+    results.forEach((department) => {
+      departmentArray.push(department.name);
+    });
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          name: "roleName",
+          message: "Enter new role name:",
+        },
+        {
+          type: "input",
+          name: "salaryAmount",
+          message: "Enter salary amount:",
+        },
+        {
+          type: "list",
+          name: "departmentList",
+          message: "Select department:",
+          choices: departmentArray,
+        },
+      ])
+      .then((answer) => {
+        const { roleName, salaryAmount, departmentList } = answer;
+        let departmentID = departmentArray.indexOf(answer.departmentList) + 1;
+        connection.query(
+          sqlQueries.addRoleQuery,
+          [answer.roleName, answer.salaryAmount, departmentID],
+          function (err, results) {
+            connection.query(
+              sqlQueries.viewAllRolesQuery,
+              function (err, results) {
+                console.log("\n");
+                console.table(results);
+                userChoices();
+              }
+            );
+          }
+        );
+      });
   });
 }
-function addDepartment() {}
-function addRole() {}
+
 function addEmployee() {}
+
 function updateEmployeeRole() {}
 
 init();
