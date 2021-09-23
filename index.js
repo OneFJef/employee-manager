@@ -36,16 +36,6 @@ const sqlQueries = {
   updateEmployeeRoleQuery: "",
 };
 
-const {
-  viewAllDepartmentsQuery,
-  viewAllRolesQuery,
-  viewAllEmployeesQuery,
-  addDepartmentQuery,
-  addRoleQuery,
-  addEmployeeQuery,
-  updateEmployeeRoleQuery,
-} = sqlQueries;
-
 function init() {
   console.log(
     logo({
