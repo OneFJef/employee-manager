@@ -1,4 +1,4 @@
-CREATE DATABASE employee_db
+CREATE DATABASE employee_db;
 USE employee_db;
 
 CREATE TABLE `department` (
@@ -22,7 +22,7 @@ CREATE TABLE `employee` (
   `first_name` varchar(30) NOT NULL,
   `last_name` varchar(30) NOT NULL,
   `role_id` int NOT NULL,
-  `manager_id` int NOT NULL,
+  `manager_id` int,
   PRIMARY KEY (`id`),
   KEY `role_id` (`role_id`),
   KEY `manager_id` (`manager_id`),

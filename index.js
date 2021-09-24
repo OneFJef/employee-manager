@@ -35,8 +35,6 @@ const sqlQueries = {
     "INSERT INTO `role` (title, salary, department_id) VALUES (?, ?, ?)",
   addEmployeeQuery:
     "INSERT INTO `employee` (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)",
-  findEmployeeQuery:
-    "SELECT id, first_name, last_name, role_id, manager_id FROM employee WHERE id = ?",
   updateEmployeeRoleQuery: "UPDATE employee SET role_id = ? WHERE id = ?",
 };
 
@@ -297,31 +295,23 @@ function updateEmployeeRole() {
           },
         ])
         .then((answer) => {
-          // const { employeeList, roleList } = answer;
-          // const employeeIndex = employeeArray.indexOf(employeeList) + 1;
-          // const employeeIDIndex = employeeIDArray.indexOf(employeeIndex) + 1;
-          // connection.query(
-          //   sqlQueries.findEmployeeQuery,
-          //   [employeeIDIndex],
-          //   function (err, results) {
-          //     console.log(results);
-          //     connection.query(
-          //       sqlQueries.updateEmployeeRoleQuery,
-          //       [],
-          //       function (err, results) {
-          //         connection.query(
-          //           sqlQueries.findEmployeeQuery,
-          //           [],
-          //           function (err, results) {
-          //             console.log("\n");
-          //             console.table(results);
-          //             userChoices();
-          //           }
-          //         );
-          //       }
-          //     );
-          //   }
-          // );
+          const { employeeList, roleList } = answer;
+          const selectedEmployee = employeeArray.indexOf(answer.employeeList);
+          const selectedEmployeeID = parseInt(
+            employeeIDArray[selectedEmployee]
+          );
+          const selectedRole = roleArray.indexOf(answer.roleList);
+          const selectedRoleID = roleIDArray[selectedRole];
+          connection.query(
+            sqlQueries.updateEmployeeRoleQuery,
+            [selectedRoleID, selectedEmployeeID],
+            function (err, results) {
+              console.log("\n");
+              console.log("Employee role has been updated.");
+              console.log("\n");
+              userChoices();
+            }
+          );
         });
     });
   });
