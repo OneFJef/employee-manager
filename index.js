@@ -5,7 +5,6 @@ const logo = require("asciiart-logo");
 
 require("dotenv").config();
 
-// create the connection to database
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   database: process.env.DATABASE,
