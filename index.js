@@ -5,6 +5,7 @@ const logo = require("asciiart-logo");
 
 require("dotenv").config();
 
+// connection to the database
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   database: process.env.DATABASE,
@@ -12,6 +13,7 @@ const connection = mysql.createConnection({
   password: process.env.DB_PASS,
 });
 
+// navigation questions
 const choices = [
   "[View All] Departments",
   "[View All] Roles",
@@ -23,6 +25,7 @@ const choices = [
   "[Quit] Exit Program",
 ];
 
+// queries for mysql2
 const sqlQueries = {
   viewAllDepartmentsQuery: "SELECT * FROM `department`",
   viewAllRolesQuery:
@@ -37,6 +40,7 @@ const sqlQueries = {
   updateEmployeeRoleQuery: "UPDATE employee SET role_id = ? WHERE id = ?",
 };
 
+// start function that presents the software banner and the initial navigation prompt
 function init() {
   console.log(
     logo({
@@ -46,6 +50,7 @@ function init() {
   userChoices();
 }
 
+// navigation function
 function userChoices() {
   inquirer
     .prompt([
@@ -103,6 +108,7 @@ function userChoices() {
     });
 }
 
+// query to view a table of all departments
 function viewAllDepartments() {
   connection.query(sqlQueries.viewAllDepartmentsQuery, function (err, results) {
     console.log("\n");
@@ -111,6 +117,7 @@ function viewAllDepartments() {
   });
 }
 
+// query to view a table of all roles
 function viewAllRoles() {
   connection.query(sqlQueries.viewAllRolesQuery, function (err, results) {
     console.log("\n");
@@ -119,6 +126,7 @@ function viewAllRoles() {
   });
 }
 
+// query to view a table of all employees
 function viewAllEmployees() {
   connection.query(sqlQueries.viewAllEmployeesQuery, function (err, results) {
     console.log("\n");
@@ -127,6 +135,7 @@ function viewAllEmployees() {
   });
 }
 
+// add a new department
 function addDepartment() {
   inquirer
     .prompt([
@@ -137,23 +146,22 @@ function addDepartment() {
       },
     ])
     .then((answer) => {
+      const { departmentName } = answer;
       connection.query(
         sqlQueries.addDepartmentQuery,
         [Object.values(answer)],
         function (err, results) {
-          connection.query(
-            sqlQueries.viewAllDepartmentsQuery,
-            function (err, results) {
-              console.log("\n");
-              console.table(results);
-              userChoices();
-            }
+          console.log(
+            "\x1b[32m%s\x1b[0m",
+            `> Success: ${answer.departmentName} has been created.`
           );
+          userChoices();
         }
       );
     });
 }
 
+// add a new role
 function addRole() {
   connection.query(sqlQueries.viewAllDepartmentsQuery, function (err, results) {
     let departmentArray = [];
@@ -186,20 +194,18 @@ function addRole() {
           sqlQueries.addRoleQuery,
           [answer.roleName, answer.salaryAmount, departmentID],
           function (err, results) {
-            connection.query(
-              sqlQueries.viewAllRolesQuery,
-              function (err, results) {
-                console.log("\n");
-                console.table(results);
-                userChoices();
-              }
+            console.log(
+              "\x1b[32m%s\x1b[0m",
+              `> Success: ${answer.roleName} has been created.`
             );
+            userChoices();
           }
         );
       });
   });
 }
 
+// add a new employee
 function addEmployee() {
   let employeeArray = ["None"];
   let roleArray = [];
@@ -242,18 +248,18 @@ function addEmployee() {
           const { firstName, lastName, roleList, employeeList } = answer;
           let roleID = roleArray.indexOf(answer.roleList) + 1;
           let employeeID = employeeArray.indexOf(answer.employeeList);
+          if (employeeID === 0) {
+            employeeID = null;
+          }
           connection.query(
             sqlQueries.addEmployeeQuery,
             [answer.firstName, answer.lastName, roleID, employeeID],
             function (err, results) {
-              connection.query(
-                sqlQueries.viewAllEmployeesQuery,
-                function (err, results) {
-                  console.log("\n");
-                  console.table(results);
-                  userChoices();
-                }
+              console.log(
+                "\x1b[32m%s\x1b[0m",
+                `> Success: ${answer.firstName} ${answer.lastName} has been added.`
               );
+              userChoices();
             }
           );
         });
@@ -261,6 +267,7 @@ function addEmployee() {
   });
 }
 
+// update existing employee's role
 function updateEmployeeRole() {
   let employeeArray = [];
   let employeeIDArray = [];
@@ -305,9 +312,10 @@ function updateEmployeeRole() {
             sqlQueries.updateEmployeeRoleQuery,
             [selectedRoleID, selectedEmployeeID],
             function (err, results) {
-              console.log("\n");
-              console.log("Employee role has been updated.");
-              console.log("\n");
+              console.log(
+                "\x1b[32m%s\x1b[0m",
+                `> Success: ${answer.employeeList}'s role has been updated.`
+              );
               userChoices();
             }
           );
@@ -316,4 +324,5 @@ function updateEmployeeRole() {
   });
 }
 
+// starts the program
 init();
