@@ -31,9 +31,13 @@ const sqlQueries = {
   viewAllEmployeesQuery:
     "SELECT employee.id, employee.first_name, employee.last_name, CONCAT(mgr.first_name,' ',mgr.last_name) AS manager, role.title AS role, role.salary, department.`name` AS department FROM `employee` JOIN `role` ON `role`.id = `employee`.role_id JOIN `department` ON `department`.id = `role`.department_id LEFT JOIN `employee` `mgr` ON `mgr`.id = `employee`.manager_id",
   addDepartmentQuery: "INSERT INTO `department` (`name`) VALUES (?)",
-  addRoleQuery: "INSERT INTO `role` (title, salary, department_id) VALUES (?, ?, ?)",
-  addEmployeeQuery: "",
-  updateEmployeeRoleQuery: "",
+  addRoleQuery:
+    "INSERT INTO `role` (title, salary, department_id) VALUES (?, ?, ?)",
+  addEmployeeQuery:
+    "INSERT INTO `employee` (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)",
+  findEmployeeQuery:
+    "SELECT id, first_name, last_name, role_id, manager_id FROM employee WHERE id = ?",
+  updateEmployeeRoleQuery: "UPDATE employee SET role_id = ? WHERE id = ?",
 };
 
 function init() {
@@ -42,7 +46,6 @@ function init() {
       name: "Employee Manager",
     }).render()
   );
-  console.log(sqlQueries.addEmployeeQuery);
   userChoices();
 }
 
@@ -112,25 +115,19 @@ function viewAllDepartments() {
 }
 
 function viewAllRoles() {
-  connection.query(
-    sqlQueries.viewAllRolesQuery,
-    function (err, results) {
-      console.log("\n");
-      console.table(results);
-      userChoices();
-    }
-  );
+  connection.query(sqlQueries.viewAllRolesQuery, function (err, results) {
+    console.log("\n");
+    console.table(results);
+    userChoices();
+  });
 }
 
 function viewAllEmployees() {
-  connection.query(
-    sqlQueries.viewAllEmployeesQuery,
-    function (err, results) {
-      console.log("\n");
-      console.table(results);
-      userChoices();
-    }
-  );
+  connection.query(sqlQueries.viewAllEmployeesQuery, function (err, results) {
+    console.log("\n");
+    console.table(results);
+    userChoices();
+  });
 }
 
 function addDepartment() {
@@ -139,7 +136,7 @@ function addDepartment() {
       {
         type: "input",
         name: "departmentName",
-        message: "Enter new department name:",
+        message: "Enter department name:",
       },
     ])
     .then((answer) => {
@@ -171,7 +168,7 @@ function addRole() {
         {
           type: "input",
           name: "roleName",
-          message: "Enter new role name:",
+          message: "Enter role name:",
         },
         {
           type: "input",
@@ -181,7 +178,7 @@ function addRole() {
         {
           type: "list",
           name: "departmentList",
-          message: "Select department:",
+          message: "Select a department:",
           choices: departmentArray,
         },
       ])
@@ -206,8 +203,128 @@ function addRole() {
   });
 }
 
-function addEmployee() {}
+function addEmployee() {
+  let employeeArray = ["None"];
+  let roleArray = [];
+  connection.query(sqlQueries.viewAllEmployeesQuery, function (err, results) {
+    results.forEach((employee) => {
+      employeeArray.push(
+        `${employee.first_name}` + " " + `${employee.last_name}`
+      );
+    });
+    connection.query(sqlQueries.viewAllRolesQuery, function (err, results) {
+      results.forEach((role) => {
+        roleArray.push(role.role);
+      });
+      inquirer
+        .prompt([
+          {
+            type: "input",
+            name: "firstName",
+            message: "Enter employee's first name:",
+          },
+          {
+            type: "input",
+            name: "lastName",
+            message: "Enter employee's last name:",
+          },
+          {
+            type: "list",
+            name: "roleList",
+            message: "Select a role:",
+            choices: roleArray,
+          },
+          {
+            type: "list",
+            name: "employeeList",
+            message: "Select a manager:",
+            choices: employeeArray,
+          },
+        ])
+        .then((answer) => {
+          const { firstName, lastName, roleList, employeeList } = answer;
+          let roleID = roleArray.indexOf(answer.roleList) + 1;
+          let employeeID = employeeArray.indexOf(answer.employeeList);
+          connection.query(
+            sqlQueries.addEmployeeQuery,
+            [answer.firstName, answer.lastName, roleID, employeeID],
+            function (err, results) {
+              connection.query(
+                sqlQueries.viewAllEmployeesQuery,
+                function (err, results) {
+                  console.log("\n");
+                  console.table(results);
+                  userChoices();
+                }
+              );
+            }
+          );
+        });
+    });
+  });
+}
 
-function updateEmployeeRole() {}
+function updateEmployeeRole() {
+  let employeeArray = [];
+  let employeeIDArray = [];
+  let roleArray = [];
+  let roleIDArray = [];
+  connection.query(sqlQueries.viewAllEmployeesQuery, function (err, results) {
+    results.forEach((employee) => {
+      employeeArray.push(
+        `${employee.first_name}` + " " + `${employee.last_name}`
+      );
+      employeeIDArray.push(`${employee.id}`);
+    });
+    connection.query(sqlQueries.viewAllRolesQuery, function (err, results) {
+      results.forEach((role) => {
+        roleArray.push(role.role);
+        roleIDArray.push(role.id);
+      });
+      inquirer
+        .prompt([
+          {
+            type: "list",
+            name: "employeeList",
+            message: "Select an employee:",
+            choices: employeeArray,
+          },
+          {
+            type: "list",
+            name: "roleList",
+            message: "Select a role:",
+            choices: roleArray,
+          },
+        ])
+        .then((answer) => {
+          // const { employeeList, roleList } = answer;
+          // const employeeIndex = employeeArray.indexOf(employeeList) + 1;
+          // const employeeIDIndex = employeeIDArray.indexOf(employeeIndex) + 1;
+          // connection.query(
+          //   sqlQueries.findEmployeeQuery,
+          //   [employeeIDIndex],
+          //   function (err, results) {
+          //     console.log(results);
+          //     connection.query(
+          //       sqlQueries.updateEmployeeRoleQuery,
+          //       [],
+          //       function (err, results) {
+          //         connection.query(
+          //           sqlQueries.findEmployeeQuery,
+          //           [],
+          //           function (err, results) {
+          //             console.log("\n");
+          //             console.table(results);
+          //             userChoices();
+          //           }
+          //         );
+          //       }
+          //     );
+          //   }
+          // );
+        });
+    });
+  });
+}
 
 init();
